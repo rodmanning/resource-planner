@@ -66,7 +66,7 @@ Installation
 Source Code
 -----------
 
-The source code is availbale from:
+The source code is available from:
 
   https://github.com/rodmanning/resource-planner
 
