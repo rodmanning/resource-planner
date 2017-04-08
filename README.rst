@@ -73,17 +73,23 @@ The source code is available from:
 Installation
 ------------
 
-1. Download the source code from the respository noted above
+#. Download the source code from the respository noted above
 
-2. Ensure the following dependcies are installed:
+#. Create a virtual environment:
 
-   - Python 2.x
-   - Pandas
-   - Seaborn
+   `virtualenv --python /path/to/python2.7 env`
+
+#. Install packages from `requirements.txt` using `pip`:
+
+   `pip install -r requirements.txt`
+   
+#. If the GUI is to be used, install the following modules (either through pip
+   or your favourite package management program:
+
    - wxPython (GUI)
    - Gooey (GUI)
 
-3. Run the program either using the GUI or from the CLI
+#. Run the program either using the GUI or from the CLI
 
 License
 =======
