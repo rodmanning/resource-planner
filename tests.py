@@ -5,13 +5,30 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 
 import unittest
-import subprocess
 import os
 import StringIO
 import resource_planner
+import pandas as pd
+from StringIO import StringIO
+from contextlib import contextmanager
 
 FNULL = open(os.devnull, 'w')
 
+
+@contextmanager
+def capture_sys_output():
+    """
+    Capture stdout and stderr to avoid printing messages to the CLI.
+    """
+    capture_out, capture_err = StringIO(), StringIO()
+    current_out, current_err = sys.stdout, sys.stderr
+    try:
+        sys.stdout, sys.stderr = capture_out, capture_err
+        yield capture_out, capture_err
+    finally:
+        sys.stdout, sys.stderr = current_out, current_err
+
+        
 class TestRuntime(unittest.TestCase):
     """
     Test the runtime and flow-control logic of the program.
@@ -32,34 +49,25 @@ class TestRuntime(unittest.TestCase):
         Test the code used to parse arguments passed to the program.
 
         """
-        # Test that it works with input file given
-        result = subprocess.check_call(
-            ["python", self.app, "--input", self.filename]
-        )
-        assert result == 0
-        # Test that it accepts all args when optional args passed
-        result = subprocess.check_call(
-            ["python", self.app,
-             "--input", self.filename,
-             "--output", self.output,
-             "--title", self.title,
-             "--subtitle", self.subtitle,]             
-        )
-        assert result == 0
         # Test that it fails if no input file given
-        with self.assertRaises(subprocess.CalledProcessError) as cpe:
-            subprocess.check_call(
-                ["python", self.app, "--input", self.wrong_filename],
-                stderr=FNULL,
-            )
+        args = []
+        with self.assertRaises(AttributeError) as context:
+            with capture_sys_output as (stdout, stderr):
+                resource_planner.parse_args(args)
+        self.assertEqual(str(context.exception), "__exit__")
         # Test that it fails when unknown args are passed
-        with self.assertRaises(subprocess.CalledProcessError) as cpe:
-            subprocess.check_call(
-                ["python", self.app,
-                 "--input", self.filename,
-                 "--unknown", "arg"],
-                stderr=FNULL,
-            )
+        args = [
+            "--input", self.filename,
+            "--unknown", "arg"
+        ]
+        with self.assertRaises(AttributeError) as context:
+            with capture_sys_output as (stdout, stderr):
+                resource_planner.parse_args(args)
+        self.assertEqual(str(context.exception), "__exit__")
+        # Test that it works with only the input file given
+        args = ["--input", self.filename]
+        result = resource_planner.parse_args(args)
+        self.assertEqual(len(result), 4)
         # Test that args passed are parsed correctly
         args = [
             "--input", self.filename,
@@ -82,17 +90,45 @@ class TestData(unittest.TestCase):
 
     
     def setUp(self):
-        pass
+        self.xlsx_file = os.path.dirname(__file__) + "data.xlsx"
+        self.xlsx_wrongfile = os.path.dirname(__file__) + "not.here"
 
+        self.input_data = [
+            [ "2017-01-01", "10", "Red", "Jellybeans", "Line 1" ],
+            [ "2017-01-01", "20", "Green", "Jellybeans", "Line 2" ],
+            [ "2017-01-01", "25", "Green", "Frogs", "Line 3" ],
+            [ "2017-01-01", "15", "Red", "Frogs", "Line 4" ],
+            [ "2017-02-01", "-10", "Red", "Frogs", "Line 5" ],
+        ]
+        self.red_frogs_output = [
+            [ "2017-01-31", "15" ],
+            [ "2017-02-28", "5" ],
+        ]
 
-    def test_get_date(self):
+    def test_get_data(self):
         """
         Test the code used to get and parse the Excel data.
 
-        """
-        pass
+        Note:
 
-    
+          This test suite relies on the included "data.xlsx" file to provide
+          assurance that the data is being read into the correct format.
+
+          Removing or modifying this example file may cause this test to fail.
+
+        """
+        # Check that an IOError is raised if the file cannot be found
+        with self.assertRaises(IOError) as context:
+            resource_planner.get_data(self.xlsx_wrongfile)
+        # Check that the data is returned correctly
+        result = resource_planner.get_data(self.xlsx_file)
+        # 4 pages in the workbook, so 4 df's
+        self.assertEqual(len(result), 4) 
+        # Check 5 columns in each sheet
+        for sheet in result:
+            self.assertEqual(len(result[sheet].columns), 5)
+
+
     def test_process_data(self):
         """
         Test the code used to process the raw data into a Pandas df.
