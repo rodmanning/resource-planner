@@ -9,9 +9,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import argparse
+import sys
 
 
-def parse_args():
+def parse_args(args):
     """
     Parse arguments passed to the program.
 
@@ -46,8 +47,7 @@ def parse_args():
         help="Sub-title for the plot (optional)",
         default=None,
         )
-    args = parser.parse_args()
-    return vars(args)
+    return vars(parser.parse_args(args))
 
 
 def get_data(path):
@@ -71,9 +71,7 @@ def process_data(data):
     fields and makes then make seperate df's out of them.
 
     """
-    for key, value in data.items():
-        print key
-        print value
+    pass
 
 
 def plot_data():
@@ -97,7 +95,7 @@ def main():
     Main program control loop.
 
     """
-    args = parse_args()
+    args = parse_args(sys.argv[1:])
     data = get_data(args["input"])
     process_data(data)
     
