@@ -14,6 +14,7 @@ import argparse
 def parse_args():
     """
     Parse arguments passed to the program.
+
     """
     parser = argparse.ArgumentParser(
         description="Resource Planner to determine number of resources available",
@@ -55,6 +56,7 @@ def get_data(path):
 
     path: 
       The path to the MS Excel (xlsx) file used as input.
+
     """
     data = {}
     excel_file = pd.ExcelFile(path)
@@ -62,16 +64,22 @@ def get_data(path):
         data[sheet.lower()] = excel_file.parse(sheet)
     return data
 
-def process_data():
+def process_data(data):
+    """Process data into panda dataframes.
+
+    Most significant change this function does is change the two 'sorted'
+    fields and makes then make seperate df's out of them.
+
     """
-    Process data into panda dataframes.
-    """
-    pass
+    for key, value in data.items():
+        print key
+        print value
 
 
 def plot_data():
     """
     Plot the data as scatter-plot charts.
+
     """
     pass
 
@@ -79,6 +87,7 @@ def plot_data():
 def write_plots():
     """
     Write the created plots to disk.
+
     """
     pass
 
@@ -86,9 +95,11 @@ def write_plots():
 def main():
     """
     Main program control loop.
+
     """
     args = parse_args()
     data = get_data(args["input"])
+    process_data(data)
     
 if __name__ == "__main__":
     main()
