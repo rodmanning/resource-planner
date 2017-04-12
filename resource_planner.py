@@ -62,18 +62,46 @@ def get_data(path):
     excel_file = pd.ExcelFile(path)
     for sheet in excel_file.sheet_names:
         data[sheet.lower()] = excel_file.parse(sheet)
+        # Remove any spaces in column names
+        data[sheet.lower()].rename(
+            columns=lambda x: x.replace(" ", "_"),
+            inplace=True)
     return data
 
-def process_data(data):
-    """Process data into panda dataframes.
+def sort_data(data):
+    """Sort data into panda dataframes.
 
-    Most significant change this function does is change the two 'sorted'
-    fields and makes then make seperate df's out of them.
+    This function does change the two 'sorted' fields and makes them into
+    individual df's.
 
     """
-    pass
-
-
+    result = {}
+    sort_combos = {}
+    for sheet in data:
+        # Get all unique combinations of values in the sorting columns
+        sort1 = data[sheet].columns[2]
+        sort2 = data[sheet].columns[3]
+        sort1_vals = list(pd.Series(data[sheet][sort1].unique()))
+        sort2_vals = list(pd.Series(data[sheet][sort2].unique()))
+        # Get a list of tuples of all possible combinations of unique
+        # values in the sorting columns
+        stack = []
+        the_funk = {}
+        for x in sort1_vals:
+            for y in sort2_vals:
+                stack.append((x, y))
+        # Get a 
+        for f in stack:
+            d = data[sheet]
+            query_string = "{0} == '{1}' & {2} == '{3}'".format(
+                sort1, f[0], sort2, f[1]
+            )
+            query = d.query(query_string)
+            label = "{0}-{1}".format(*f)
+            result[label] = query
+    return result
+            
+            
 def plot_data():
     """
     Plot the data as scatter-plot charts.

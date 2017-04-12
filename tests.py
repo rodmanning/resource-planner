@@ -92,19 +92,27 @@ class TestData(unittest.TestCase):
     def setUp(self):
         self.xlsx_file = os.path.dirname(__file__) + "data.xlsx"
         self.xlsx_wrongfile = os.path.dirname(__file__) + "not.here"
+        self.cols = [ "Date", "Change", "Sort 1", "Sort 2", "Comments" ]
+        planning = pd.DataFrame(                  
+            data=[
+                [ "2017-01-01", "10", "Red", "Jellybeans", ],
+                [ "2017-01-01", "20", "Green", "Jellybeans", ],
+                [ "2017-01-01", "25", "Green", "Frogs", ],
+                [ "2017-01-01", "15", "Red", "Frogs" ],
+                [ "2017-02-01", "-10", "Red", "Frogs" ],
+            ],
+            columns=["Date", "Change", "Sort_1", "Sort_2"],
+            )
+        others = pd.DataFrame(data={"Date": [], "Change": [],
+                                    "Sort 1": [], "Sort 2": []})
+        self.data = {
+            "planning": planning,
+            "leave": others,
+            "required": others,
+            "margin": others,
+        }
 
-        self.input_data = [
-            [ "2017-01-01", "10", "Red", "Jellybeans", "Line 1" ],
-            [ "2017-01-01", "20", "Green", "Jellybeans", "Line 2" ],
-            [ "2017-01-01", "25", "Green", "Frogs", "Line 3" ],
-            [ "2017-01-01", "15", "Red", "Frogs", "Line 4" ],
-            [ "2017-02-01", "-10", "Red", "Frogs", "Line 5" ],
-        ]
-        self.red_frogs_output = [
-            [ "2017-01-31", "15" ],
-            [ "2017-02-28", "5" ],
-        ]
-
+        
     def test_get_data(self):
         """
         Test the code used to get and parse the Excel data.
@@ -134,7 +142,9 @@ class TestData(unittest.TestCase):
         Test the code used to process the raw data into a Pandas df.
 
         """
-        pass
+        result = resource_planner.sort_data(self.data)
+        print(result)
+                         
 
 
 class TestPlotting(unittest.TestCase):
