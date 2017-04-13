@@ -92,7 +92,7 @@ class TestData(unittest.TestCase):
     def setUp(self):
         self.xlsx_file = os.path.dirname(__file__) + "data.xlsx"
         self.xlsx_wrongfile = os.path.dirname(__file__) + "not.here"
-        self.cols = [ "Date", "Change", "Sort 1", "Sort 2", "Comments" ]
+        self.cols = [ "Date", "Change", "Sort_1", "Sort_2" ]
         planning = pd.DataFrame(                  
             data=[
                 [ "2017-01-01", "10", "Red", "Jellybeans", ],
@@ -128,7 +128,7 @@ class TestData(unittest.TestCase):
         # Check that an IOError is raised if the file cannot be found
         with self.assertRaises(IOError) as context:
             resource_planner.get_data(self.xlsx_wrongfile)
-        # Check that the data is returned correctly
+        # Check that the sample input data can be parsed from the xlsx file
         result = resource_planner.get_data(self.xlsx_file)
         # 4 pages in the workbook, so 4 df's
         self.assertEqual(len(result), 4) 
@@ -137,14 +137,52 @@ class TestData(unittest.TestCase):
             self.assertEqual(len(result[sheet].columns), 5)
 
 
+    def __compare_df_values(self, df1, df2):
+        """
+        Compare 2 df's to see if they have the same values.
+
+        """
+        matrix = df1.values == df2.values
+        if False in matrix:
+            return False
+        else:
+            return True
+        
+            
     def test_process_data(self):
         """
         Test the code used to process the raw data into a Pandas df.
 
         """
         result = resource_planner.sort_data(self.data)
-        print(result)
-                         
+        # Check that sample data is returned correctly
+        expected = pd.DataFrame(
+            data=[["2017-01-01", "10", "Red", "Jellybeans"],],
+            columns=self.cols[0:4],
+        )
+        self.assertTrue(
+            self.__compare_df_values(result["Red-Jellybeans"], expected))
+        expected = pd.DataFrame(
+            data=[["2017-01-01", "20", "Green", "Jellybeans"],],
+            columns=self.cols[0:4],
+            index=[0,]
+        )
+        self.assertTrue(
+            self.__compare_df_values(result["Green-Jellybeans"], expected))
+        expected = pd.DataFrame(
+            data=[["2017-01-01", "25", "Green", "Frogs"],],
+            columns=self.cols[0:4],
+        )
+        self.assertTrue(
+            self.__compare_df_values(result["Green-Frogs"], expected))
+        expected = pd.DataFrame(
+            data=[["2017-01-01", "15", "Red", "Frogs"],
+                  ["2017-02-01", "-10", "Red", "Frogs"],],
+            columns=self.cols[0:4],
+        )
+        self.assertTrue(
+            self.__compare_df_values(result["Red-Frogs"], expected))
+
 
 
 class TestPlotting(unittest.TestCase):
