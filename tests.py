@@ -67,7 +67,7 @@ class TestRuntime(unittest.TestCase):
         # Test that it works with only the input file given
         args = ["--input", self.filename]
         result = resource_planner.parse_args(args)
-        self.assertEqual(len(result), 4)
+        self.assertEqual(len(result), 5)
         # Test that args passed are parsed correctly
         args = [
             "--input", self.filename,
@@ -100,6 +100,7 @@ class TestData(unittest.TestCase):
                 [ "2017-01-01", "25", "Green", "Frogs", ],
                 [ "2017-01-01", "15", "Red", "Frogs" ],
                 [ "2017-02-01", "-10", "Red", "Frogs" ],
+                [ "2017-03-01", "0", "Red", "Frogs" ],
             ],
             columns=["Date", "Change", "Sort_1", "Sort_2"],
             )
@@ -177,7 +178,9 @@ class TestData(unittest.TestCase):
             self.__compare_df_values(result["Green-Frogs"], expected))
         expected = pd.DataFrame(
             data=[["2017-01-01", "15", "Red", "Frogs"],
-                  ["2017-02-01", "-10", "Red", "Frogs"],],
+                  ["2017-02-01", "-10", "Red", "Frogs"],
+                  [ "2017-03-01", "0", "Red", "Frogs" ],
+            ],
             columns=self.cols[0:4],
         )
         self.assertTrue(
@@ -190,7 +193,7 @@ class TestData(unittest.TestCase):
 
         """
         sorted_data = resource_planner.sort_data(self.data)
-        x = resource_planner.process_data(sorted_data)
+        x = resource_planner.process_data(sorted_data, freq="M")
 
         # Check that the 'Red Frogs' df looks like this:
         # 31-Jan: 15
@@ -199,6 +202,22 @@ class TestData(unittest.TestCase):
             x.get("Red-Frogs").loc["2017-01-31",:][0], 15)
         self.assertEqual(
             x.get("Red-Frogs").loc["2017-02-28",:][0], 5)
+        # Check that sampling over different time periods works
+        # Weekly
+        x = resource_planner.process_data(sorted_data, freq="W")
+        print(x.get("Red-Frogs"))
+        self.assertEqual(
+            x.get("Red-Frogs").loc["2017-01-29",:][0], 15)
+        self.assertEqual(
+            x.get("Red-Frogs").loc["2017-02-05",:][0], 5)
+        # Fortnightly
+        x = resource_planner.process_data(sorted_data, freq="14d")
+        print(x.get("Red-Frogs"))
+        self.assertEqual(
+            x.get("Red-Frogs").loc["2017-01-29",:][0], 15)
+        self.assertEqual(
+            x.get("Red-Frogs").loc["2017-02-12",:][0], 5)
+
 
 
 class TestPlotting(unittest.TestCase):

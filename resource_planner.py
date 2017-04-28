@@ -47,6 +47,13 @@ def parse_args(args):
         help="Sub-title for the plot (optional)",
         default=None,
         )
+    parser.add_argument(
+        "--freq",
+        metavar="TEXT",
+        help="Frequency for the plot",
+        default="M",
+        choices=["M", "W", "14d", "Q", "3d"],
+        )
     return vars(parser.parse_args(args))
 
 
@@ -114,9 +121,9 @@ def process_data(data, freq="M"):
         reindexed_df = df.set_index(pd.to_datetime(df["Date"]))
         # Convert negative values to ints
         reindexed_df["Crew Available"] = pd.to_numeric(reindexed_df["Change"])
-        reindexed_df.drop("Change", axis=1)
+        reindexed_df.drop("Change", axis=1, inplace=True)
         # Group and sum the data, then add it to the stack to be returned
-        processed_data = reindexed_df.groupby(pd.Grouper(freq=freq)).sum().cumsum().ffill()
+        processed_data = reindexed_df.groupby(pd.Grouper(freq=freq, label="right")).sum().cumsum().ffill()
         result[name] = processed_data
     return result
 
@@ -155,7 +162,7 @@ def main():
     args = parse_args(sys.argv[1:])
     data = get_data(args["input"])
     sorted_data = sort_data(data)
-    processed_data = process_data(sorted_data)
+    processed_data = process_data(sorted_data, freq=args["freq"])
 
 if __name__ == "__main__":
     main()
