@@ -28,7 +28,7 @@ def capture_sys_output():
     finally:
         sys.stdout, sys.stderr = current_out, current_err
 
-        
+
 class TestRuntime(unittest.TestCase):
     """
     Test the runtime and flow-control logic of the program.
@@ -42,8 +42,8 @@ class TestRuntime(unittest.TestCase):
         self.output = "output.png"
         self.title = "Resource Title"
         self.subtitle = "Charts Subtitle"
-        
-    
+
+
     def test_parse_args(self):
         """
         Test the code used to parse arguments passed to the program.
@@ -81,19 +81,19 @@ class TestRuntime(unittest.TestCase):
         self.assertEqual(result.get("title"), "Resource Title")
         self.assertEqual(result.get("subtitle"), "Charts Subtitle")
 
-        
+
 class TestData(unittest.TestCase):
     """
     Test the data reading, parsing, and outputs of the app.
 
     """
 
-    
+
     def setUp(self):
         self.xlsx_file = os.path.dirname(__file__) + "data.xlsx"
         self.xlsx_wrongfile = os.path.dirname(__file__) + "not.here"
         self.cols = [ "Date", "Change", "Sort_1", "Sort_2" ]
-        planning = pd.DataFrame(                  
+        planning = pd.DataFrame(
             data=[
                 [ "2017-01-01", "10", "Red", "Jellybeans", ],
                 [ "2017-01-01", "20", "Green", "Jellybeans", ],
@@ -112,7 +112,7 @@ class TestData(unittest.TestCase):
             "margin": others,
         }
 
-        
+
     def test_get_data(self):
         """
         Test the code used to get and parse the Excel data.
@@ -131,7 +131,7 @@ class TestData(unittest.TestCase):
         # Check that the sample input data can be parsed from the xlsx file
         result = resource_planner.get_data(self.xlsx_file)
         # 4 pages in the workbook, so 4 df's
-        self.assertEqual(len(result), 4) 
+        self.assertEqual(len(result), 4)
         # Check 5 columns in each sheet
         for sheet in result:
             self.assertEqual(len(result[sheet].columns), 5)
@@ -147,9 +147,9 @@ class TestData(unittest.TestCase):
             return False
         else:
             return True
-        
-            
-    def test_process_data(self):
+
+
+    def test_sort_data(self):
         """
         Test the code used to process the raw data into a Pandas df.
 
@@ -184,6 +184,22 @@ class TestData(unittest.TestCase):
             self.__compare_df_values(result["Red-Frogs"], expected))
 
 
+    def test_process_data(self):
+        """
+        Test the code used to process data which has already been sorted.
+
+        """
+        sorted_data = resource_planner.sort_data(self.data)
+        x = resource_planner.process_data(sorted_data)
+
+        # Check that the 'Red Frogs' df looks like this:
+        # 31-Jan: 15
+        # 28-Feb:  5
+        self.assertEqual(
+            x.get("Red-Frogs").loc["2017-01-31",:][0], 15)
+        self.assertEqual(
+            x.get("Red-Frogs").loc["2017-02-28",:][0], 5)
+
 
 class TestPlotting(unittest.TestCase):
     """
@@ -191,11 +207,11 @@ class TestPlotting(unittest.TestCase):
 
     """
 
-    
+
     def setUp(self):
         pass
-    
-    
+
+
     def test_plot_data(self):
         """
         Test the code used to plot the charts using Seaborn.
@@ -210,5 +226,3 @@ class TestPlotting(unittest.TestCase):
 
         """
         pass
-
-    

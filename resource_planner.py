@@ -20,7 +20,7 @@ def parse_args(args):
     parser = argparse.ArgumentParser(
         description="Resource Planner to determine number of resources available",
         epilog="Copyright (c) Taslytic Solutions. Licensed under the MPL v2.0",
-        add_help=True,        
+        add_help=True,
        )
     parser.add_argument(
         "--input",
@@ -54,7 +54,7 @@ def get_data(path):
     """
     Get data for the program from an input xlsx file.
 
-    path: 
+    path:
       The path to the MS Excel (xlsx) file used as input.
 
     """
@@ -67,6 +67,7 @@ def get_data(path):
             columns=lambda x: x.replace(" ", "_"),
             inplace=True)
     return data
+
 
 def sort_data(data):
     """Sort data into panda dataframes.
@@ -90,7 +91,7 @@ def sort_data(data):
         for x in sort1_vals:
             for y in sort2_vals:
                 stack.append((x, y))
-        # Get a 
+        # Get a
         for f in stack:
             d = data[sheet]
             query_string = "{0} == '{1}' & {2} == '{3}'".format(
@@ -100,8 +101,26 @@ def sort_data(data):
             label = "{0}-{1}".format(*f)
             result[label] = query
     return result
-            
-            
+
+
+def process_data(data, freq="M"):
+    """
+    Process pre-sorted dataframes to create summaries for plotting.
+
+    """
+    result = {}
+    for name,df in data.items():
+        # Convert strings to datetime objects
+        reindexed_df = df.set_index(pd.to_datetime(df["Date"]))
+        # Convert negative values to ints
+        reindexed_df["Crew Available"] = pd.to_numeric(reindexed_df["Change"])
+        reindexed_df.drop("Change", axis=1)
+        # Group and sum the data, then add it to the stack to be returned
+        processed_data = reindexed_df.groupby(pd.Grouper(freq=freq)).sum().cumsum().ffill()
+        result[name] = processed_data
+    return result
+
+
 def plot_data():
     """
     Plot the data as scatter-plot charts.
@@ -119,13 +138,24 @@ def write_plots():
 
 
 def main():
-    """
-    Main program control loop.
+    """Main program control loop.
+
+    Control process is as follows:
+
+    1. Get the data
+
+    2. Sort the data to create dataframes, then process the dataframes into
+       periodical summaries
+
+    3. Plot the data on charts and store them as StringIO buffers
+
+    4. Write the plots to disk
 
     """
     args = parse_args(sys.argv[1:])
     data = get_data(args["input"])
-    process_data(data)
-    
+    sorted_data = sort_data(data)
+    processed_data = process_data(sorted_data)
+
 if __name__ == "__main__":
     main()
