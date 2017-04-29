@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import argparse
 import sys
+import StringIO
 
 
 def parse_args(args):
@@ -52,7 +53,7 @@ def parse_args(args):
         metavar="TEXT",
         help="Frequency for the plot",
         default="M",
-        choices=["M", "W", "14d", "Q", "3d"],
+        choices=["7d", "14d", "28d", "M", "Q"],
         )
     return vars(parser.parse_args(args))
 
@@ -128,12 +129,65 @@ def process_data(data, freq="M"):
     return result
 
 
-def plot_data():
+def __style_plot(g, df, **kwargs):
+    """
+    Apply styles and artwork to a matplotlib plot.
+
+    """
+    # Setup the chart titles
+    plt.subplots_adjust(top=0.85)
+    title = kwargs.get("title", None)
+    if title is not None:
+        g.fig.suptitle(title)
+    # Set the axis labels
+    g.set_axis_labels("", "Available Resources")
+    # Style the axis
+    for ax in g.axes.flat:
+        # Style the x-axis
+        for label in ax.get_xticklabels():
+            label.set_rotation(75)
+            label.set_fontsize(8)
+        ax.xaxis.grid=True
+        # Style the y-axis
+        ylim = ax.get_ylim()
+        ax.set_ylim(0, ylim[1]*1.1)
+        ax.yaxis.set_major_locator(
+            matplotlib.ticker.MaxNLocator(integer=True))
+    # Plot the legend
+    lgd_pln, = plt.plot(
+        [], color="#4c72b0", linewidth=2, linestyle="-",
+        label="Available Resources"
+    )
+    plt.legend(
+        handles=[lgd_pln,],
+        bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0
+    )
+    return g
+
+
+def plot_data(data):
     """
     Plot the data as scatter-plot charts.
 
     """
-    pass
+    result = {}
+    for name, df in data.items():
+        # Setup a column of str values of dates to use as labels
+        df["Date"] = df.index[:].strftime("%d-%b-%Y")
+        # Plot the data
+        g = sns.factorplot(
+            data=df,
+            x="Date", y="Crew Available",
+            margin_titles=False,
+        )
+        __style_plot(
+            g, df,
+            title="Test 123",
+        )
+        stringio = StringIO.StringIO()
+        g.savefig(stringio)
+        result[name] = stringio
+    return result
 
 
 def write_plots():
@@ -163,6 +217,8 @@ def main():
     data = get_data(args["input"])
     sorted_data = sort_data(data)
     processed_data = process_data(sorted_data, freq=args["freq"])
+    plots = plot_data(processed_data)
+
 
 if __name__ == "__main__":
     main()

@@ -205,14 +205,12 @@ class TestData(unittest.TestCase):
         # Check that sampling over different time periods works
         # Weekly
         x = resource_planner.process_data(sorted_data, freq="W")
-        print(x.get("Red-Frogs"))
         self.assertEqual(
             x.get("Red-Frogs").loc["2017-01-29",:][0], 15)
         self.assertEqual(
             x.get("Red-Frogs").loc["2017-02-05",:][0], 5)
         # Fortnightly
         x = resource_planner.process_data(sorted_data, freq="14d")
-        print(x.get("Red-Frogs"))
         self.assertEqual(
             x.get("Red-Frogs").loc["2017-01-29",:][0], 15)
         self.assertEqual(
