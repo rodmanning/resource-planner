@@ -165,7 +165,7 @@ def __style_plot(g, df, **kwargs):
     return g
 
 
-def plot_data(data):
+def plot_data(data, fmt="png"):
     """
     Plot the data as scatter-plot charts.
 
@@ -185,17 +185,22 @@ def plot_data(data):
             title="Test 123",
         )
         stringio = StringIO.StringIO()
-        g.savefig(stringio)
+        g.savefig(stringio, format=fmt)
         result[name] = stringio
     return result
 
 
-def write_plots():
+def write_plots(data, fmt="png"):
     """
     Write the created plots to disk.
 
     """
-    pass
+    for name, stringio in data.items():
+        stringio.seek(0)
+        filename = "{0}.{1}".format(
+            name.replace(" ", "-").lower(), fmt)
+        with file(filename, "w") as f:
+            f.write(stringio.read())
 
 
 def main():
@@ -218,6 +223,7 @@ def main():
     sorted_data = sort_data(data)
     processed_data = process_data(sorted_data, freq=args["freq"])
     plots = plot_data(processed_data)
+    write_plots(plots)
 
 
 if __name__ == "__main__":
